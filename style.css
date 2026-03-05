@@ -1,0 +1,661 @@
+/* ============================================================
+   PID Tuning Simulator — Stylesheet
+   Phase 2: Full layout, dark Catppuccin-inspired theme.
+   ============================================================ */
+
+/* ─── Design Tokens ─────────────────────────────────────────── */
+:root {
+    --bg:        #1e1e2e;
+    --surface:   #2a2a3c;
+    --surface2:  #313244;
+    --text:      #cdd6f4;
+    --subtext:   #a6adc8;
+    --accent:    #89b4fa;
+    --teal:      #94e2d5;
+    --pink:      #f5c2e7;
+    --gold:      #f9e2af;
+    --red:       #f38ba8;
+    --blue:      #89b4fa;
+    --green:     #a6e3a1;
+    --radius:    8px;
+    --gap:       0.75rem;
+}
+
+/* ─── Reset & Base ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ─── Header ────────────────────────────────────────────────── */
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--surface2);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.header-left h1 { font-size: 1.3rem; color: var(--accent); line-height: 1.2; }
+.header-left .subtitle { font-size: 0.8rem; opacity: 0.6; }
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+.header-right select {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--subtext);
+    border-radius: var(--radius);
+    padding: 0.3rem 0.5rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    opacity: 0.8;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+}
+.toggle-label input[type="checkbox"] { accent-color: var(--accent); }
+
+/* ─── Grid Layout ───────────────────────────────────────────── */
+#app {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: var(--gap);
+    padding: var(--gap);
+    min-height: 0;
+}
+
+.panel {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 0.75rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+.panel h3 {
+    font-size: 0.9rem;
+    color: var(--subtext);
+    margin-bottom: 0.5rem;
+}
+
+/* ─── Panel: Animation & System Description ─────────────────── */
+#panel-animation {
+    overflow-y: auto;
+}
+#animation-container {
+    position: relative;
+    flex: 1;
+    min-height: 120px;
+    border: 1px solid var(--surface2);
+    border-radius: var(--radius);
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+}
+.anim-scene {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+.placeholder-text { opacity: 0.3; font-style: italic; }
+
+/* System description panel */
+#system-info {
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+#system-info summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 0.4rem;
+}
+#system-desc-text {
+    margin-bottom: 0.5rem;
+    color: var(--subtext);
+}
+#system-equation {
+    margin: 0.5rem 0;
+    text-align: center;
+    overflow-x: auto;
+}
+#system-params {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    margin-top: 0.4rem;
+}
+#system-params th {
+    text-align: left;
+    color: var(--accent);
+    padding: 0.25rem 0.5rem;
+    border-bottom: 1px solid var(--surface2);
+}
+#system-params td {
+    padding: 0.25rem 0.5rem;
+    border-bottom: 1px solid var(--surface2);
+    color: var(--subtext);
+}
+
+/* Quick Start Guide */
+#quick-start {
+    margin-top: 0.6rem;
+    border-top: 1px solid var(--surface2);
+    padding-top: 0.4rem;
+}
+#quick-start summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--teal);
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
+}
+.guide-content ol {
+    margin: 0.3rem 0 0.5rem 1.2rem;
+    padding: 0;
+    font-size: 0.8rem;
+    color: var(--subtext);
+    line-height: 1.5;
+}
+.guide-content li {
+    margin-bottom: 0.25rem;
+}
+.guide-tips {
+    font-size: 0.78rem;
+    color: var(--subtext);
+    margin: 0.4rem 0 0.2rem;
+    line-height: 1.45;
+}
+
+/* ─── Panel: Charts ─────────────────────────────────────────── */
+/* Chart.js canvases must live inside a position:relative wrapper
+   so the ResizeObserver has a stable reference size and cannot
+   trigger a grow → resize → grow loop.                          */
+.chart-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+}
+.chart-wrap canvas {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+}
+#panel-effort, #panel-timeseries {
+    min-height: 0;
+}
+
+/* Chart toolbar (time-window selector above the time chart) */
+.chart-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0 0.2rem 0.3rem;
+    font-size: 0.75rem;
+}
+.chart-window-label {
+    color: var(--subtext0, #a6adc8);
+}
+.chart-toolbar select {
+    background: var(--surface0, #313244);
+    color: var(--text, #cdd6f4);
+    border: 1px solid var(--surface1, #45475a);
+    border-radius: 4px;
+    padding: 0.15rem 0.3rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+/* ─── Panel: Controls ───────────────────────────────────────── */
+#panel-controls {
+    overflow-y: auto;
+    gap: 0.6rem;
+}
+
+.control-group {
+    margin-bottom: 0.6rem;
+}
+
+/* Mode toggle */
+.mode-toggle {
+    display: flex;
+    gap: 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--surface2);
+}
+.mode-btn {
+    flex: 1;
+    padding: 0.4rem 0.75rem;
+    border: none;
+    background: var(--surface2);
+    color: var(--subtext);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.15s;
+}
+.mode-btn.active {
+    background: var(--accent);
+    color: var(--bg);
+    font-weight: 600;
+}
+
+/* PID Sliders */
+.slider-row {
+    display: grid;
+    grid-template-columns: 3rem 1fr 4rem auto;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.35rem;
+}
+.slider-row label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--teal);
+    text-align: right;
+}
+.slider-val {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    text-align: right;
+    color: var(--gold);
+    min-width: 3.5rem;
+}
+.slider-range {
+    font-size: 0.7rem;
+    opacity: 0.4;
+    white-space: nowrap;
+}
+
+/* Manual slider row */
+.manual-slider-row label {
+    color: var(--pink);
+}
+
+/* Range input styling */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--surface2);
+    outline: none;
+    cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+    cursor: grab;
+}
+input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+    cursor: grab;
+}
+
+/* Setpoint display */
+.sp-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.5rem;
+    background: var(--surface2);
+    border-radius: var(--radius);
+}
+.sp-group label {
+    color: var(--subtext);
+    white-space: nowrap;
+}
+.sp-input {
+    width: 5.5rem;
+    padding: 0.3rem 0.4rem;
+    background: var(--surface);
+    color: var(--gold);
+    border: 1px solid var(--subtext);
+    border-radius: var(--radius);
+    font-size: 1.05rem;
+    font-weight: 700;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    text-align: center;
+    -moz-appearance: textfield;
+}
+.sp-input::-webkit-inner-spin-button,
+.sp-input::-webkit-outer-spin-button {
+    opacity: 1;
+}
+.sp-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+/* Buttons */
+.button-row {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+.btn {
+    flex: 1;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--surface2);
+    border-radius: var(--radius);
+    background: var(--surface2);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: background 0.15s, border-color 0.15s;
+    min-width: 0;
+    white-space: nowrap;
+}
+.btn:hover { background: var(--surface); border-color: var(--accent); }
+.btn-primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 700; }
+.btn-primary:hover { opacity: 0.85; }
+.btn-danger { border-color: var(--red); color: var(--red); }
+.btn-danger:hover { background: var(--red); color: var(--bg); }
+
+/* Metrics */
+.metrics-group h4 {
+    font-size: 0.82rem;
+    color: var(--subtext);
+    margin-bottom: 0.35rem;
+}
+.metric-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    padding: 0.15rem 0;
+    border-bottom: 1px solid var(--surface2);
+}
+.metric-row strong {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--gold);
+}
+
+/* ─── Utility ───────────────────────────────────────────────── */
+.hidden { display: none !important; }
+
+/* ─── PID Equation Box (below effort chart) ─────────────────── */
+.pid-equation-box {
+    text-align: center;
+    padding: 0.4rem 0.3rem 0.2rem;
+    border-top: 1px solid var(--surface2);
+    font-size: 0.85rem;
+    min-height: 2.4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+/* ─── Animation Zoom Overlay ────────────────────────────────── */
+#animation-container {
+    cursor: zoom-in;
+}
+.anim-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    background: rgba(0, 0, 0, 0.65);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+}
+.anim-overlay-content {
+    width: min(75vw, 800px);
+    height: min(60vh, 550px);
+    background: var(--surface);
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    padding: 12px;
+    position: relative;
+    cursor: default;
+}
+.anim-overlay-content svg {
+    position: absolute;
+    inset: 12px;
+    width: calc(100% - 24px) !important;
+    height: calc(100% - 24px) !important;
+}
+
+/* ─── Assignment Mode Button ────────────────────────────────── */
+.btn-assign {
+    background: var(--teal);
+    color: var(--bg);
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.35rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+.btn-assign:hover { opacity: 0.85; }
+.btn-sm { padding: 0.25rem 0.5rem; font-size: 0.78rem; }
+
+/* ─── Modal Overlay ─────────────────────────────────────────── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+.modal {
+    background: var(--surface);
+    border: 1px solid var(--surface2);
+    border-radius: 12px;
+    padding: 2rem 2.5rem;
+    max-width: 460px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+.modal h2 {
+    color: var(--accent);
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+}
+.modal-desc {
+    color: var(--subtext);
+    font-size: 0.88rem;
+    margin-bottom: 1.2rem;
+}
+.modal-field {
+    margin-bottom: 0.9rem;
+}
+.modal-field label {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--subtext);
+    margin-bottom: 0.25rem;
+}
+.modal-field input,
+.modal-field select {
+    width: 100%;
+    padding: 0.45rem 0.6rem;
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--subtext);
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+}
+.modal-field input:focus,
+.modal-field select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+.modal-actions {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 1.2rem;
+}
+.modal-actions .btn { flex: 1; }
+
+/* Goal preview inside setup modal */
+.goal-preview {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 0.6rem 0.8rem;
+    font-size: 0.82rem;
+    color: var(--subtext);
+    margin-bottom: 0.5rem;
+}
+.goal-preview .goal-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.15rem 0;
+}
+.goal-preview .goal-item .goal-val {
+    color: var(--gold);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+/* Success modal */
+.modal-success h2 {
+    color: var(--green);
+    text-align: center;
+}
+.modal-success .modal-desc {
+    text-align: center;
+}
+.completion-code {
+    text-align: center;
+    font-size: 2.8rem;
+    font-weight: 800;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--gold);
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 0.8rem 1rem;
+    margin: 1rem 0;
+    letter-spacing: 2px;
+    -webkit-user-select: all;
+    user-select: all;
+}
+.code-hint {
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--subtext);
+    opacity: 0.7;
+    margin-bottom: 1rem;
+}
+
+/* ─── Assignment Banner ─────────────────────────────────────── */
+.assignment-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.4rem 1rem;
+    background: var(--surface2);
+    border-bottom: 2px solid var(--teal);
+    font-size: 0.82rem;
+    flex-wrap: wrap;
+}
+.banner-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.banner-left strong {
+    color: var(--teal);
+}
+.banner-vars {
+    color: var(--subtext);
+    font-size: 0.8rem;
+}
+.banner-goals {
+    flex: 1;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.goal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    background: var(--surface);
+    border: 1px solid var(--surface2);
+}
+.goal-badge.met {
+    border-color: var(--green);
+    color: var(--green);
+}
+.goal-badge.unmet {
+    border-color: var(--red);
+    color: var(--red);
+}
+
+/* ─── Animations (Phase 3) ──────────────────────────────────── */
+/* Heat wave rising animation */
+@keyframes heat-rise {
+    0%   { transform: translateY(0);   opacity: var(--wave-opacity, 0); }
+    50%  { transform: translateY(-12px); opacity: var(--wave-opacity, 0); }
+    100% { transform: translateY(-24px); opacity: 0; }
+}
+.heat-wave {
+    animation: heat-rise 1.8s ease-out infinite;
+}
+
+/* Drone rotor spin hint */
+@keyframes rotor-pulse {
+    0%, 100% { opacity: 0.3; }
+    50%      { opacity: 0.6; }
+}
+
+/* ─── Responsive ────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    #app {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+    }
+    .panel { min-height: 280px; }
+    #panel-animation { min-height: 200px; }
+    header { flex-direction: column; text-align: center; }
+}

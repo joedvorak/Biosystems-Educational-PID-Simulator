@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+
+# Development / analysis tools (not needed at runtime)
+analyze.js
+test_*.js
+test_layout.html
+analysis/
+docs/
+legacy/

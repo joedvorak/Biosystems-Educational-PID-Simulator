@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BAE 305 — PID Tuning Simulator</title>
+
+    <!-- Chart.js 4.x -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+
+    <!-- KaTeX (math rendering) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/contrib/auto-render.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- ══════ Header ══════ -->
+    <header>
+        <div class="header-left">
+            <h1>PID Tuning Simulator</h1>
+            <p class="subtitle">BAE 305 — DC Circuits &amp; Microelectronics</p>
+        </div>
+        <div class="header-right">
+            <select id="plant-select" title="Choose a scenario">
+                <option value="vat">Fermentation Vat</option>
+                <option value="tractor">Tractor Heading</option>
+                <option value="reservoir">Water Reservoir</option>
+                <option value="drone">Drone Altitude</option>
+            </select>
+            <select id="speed-select" title="Time acceleration — runs N simulation steps per frame">
+                <option value="1">1×</option>
+                <option value="5">5×</option>
+                <option value="10">10×</option>
+                <option value="25">25×</option>
+                <option value="50">50×</option>
+                <option value="100">100×</option>
+                <option value="200">200×</option>
+                <option value="500">500×</option>
+            </select>
+            <label class="toggle-label" title="Show generic PID terminology instead of scenario-specific labels">
+                <input type="checkbox" id="pid-view-toggle">
+                <span>PID View</span>
+            </label>
+            <button id="btn-assignment-mode" class="btn btn-assign" title="Enter assignment mode for Canvas grading">Assignment Mode</button>
+        </div>
+    </header>
+
+    <!-- ══════ Main Grid ══════ -->
+    <main id="app">
+
+        <!-- ─── Top-Left: Animation Placeholder + System Description ─── -->
+        <section id="panel-animation" class="panel">
+            <div id="animation-container">
+
+                <!-- ═══ Fermentation Vat ═══ -->
+                <svg id="anim-vat" class="anim-scene" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet">
+                    <!-- Ambient arrows (static) -->
+                    <line x1="20" y1="60" x2="20" y2="150" stroke="#89b4fa" stroke-width="1.5" opacity="0.35"/>
+                    <polygon points="20,155 16,148 24,148" fill="#89b4fa" opacity="0.35"/>
+                    <text x="8" y="55" fill="#89b4fa" font-size="7" opacity="0.4">T_amb</text>
+                    <line x1="260" y1="60" x2="260" y2="150" stroke="#89b4fa" stroke-width="1.5" opacity="0.35"/>
+                    <polygon points="260,155 256,148 264,148" fill="#89b4fa" opacity="0.35"/>
+
+                    <!-- Tank body -->
+                    <rect x="50" y="40" width="180" height="140" rx="8" fill="none" stroke="#a6adc8" stroke-width="2"/>
+                    <!-- Liquid fill (animated height) -->
+                    <rect id="vat-liquid" x="52" y="140" width="176" height="38" rx="4" fill="#94e2d5" opacity="0.3"/>
+
+                    <!-- Heater element at base -->
+                    <rect id="vat-heater" x="80" y="175" width="120" height="8" rx="3" fill="#f38ba8" opacity="0.15"/>
+                    <!-- Heat waves (three wavy lines) -->
+                    <path id="vat-wave1" class="heat-wave" d="M100,170 Q110,160 120,170 Q130,180 140,170" stroke="#f38ba8" stroke-width="1.5" fill="none" opacity="0" style="animation-delay:0s"/>
+                    <path id="vat-wave2" class="heat-wave" d="M120,165 Q130,155 140,165 Q150,175 160,165" stroke="#f38ba8" stroke-width="1.5" fill="none" opacity="0" style="animation-delay:0.5s"/>
+                    <path id="vat-wave3" class="heat-wave" d="M140,170 Q150,160 160,170 Q170,180 180,170" stroke="#f38ba8" stroke-width="1.5" fill="none" opacity="0" style="animation-delay:1.0s"/>
+
+                    <!-- Thermometer -->
+                    <rect x="245" y="50" width="10" height="110" rx="5" fill="none" stroke="#a6adc8" stroke-width="1.5"/>
+                    <rect id="vat-therm" x="247" y="130" width="6" height="28" rx="3" fill="#f38ba8"/>
+                    <circle cx="250" cy="160" r="7" fill="#f38ba8"/>
+                    <!-- Temp scale marks -->
+                    <line x1="242" y1="55" x2="245" y2="55" stroke="#a6adc8" stroke-width="0.8"/>
+                    <text x="230" y="58" fill="#a6adc8" font-size="6">75</text>
+                    <line x1="242" y1="105" x2="245" y2="105" stroke="#a6adc8" stroke-width="0.8"/>
+                    <text x="230" y="108" fill="#a6adc8" font-size="6">37</text>
+                    <line x1="242" y1="150" x2="245" y2="150" stroke="#a6adc8" stroke-width="0.8"/>
+                    <text x="230" y="153" fill="#a6adc8" font-size="6">15</text>
+
+                    <!-- Labels -->
+                    <text x="140" y="25" text-anchor="middle" fill="#cdd6f4" font-size="10" font-weight="600">Fermentation Vat</text>
+                    <text id="vat-temp-label" x="140" y="125" text-anchor="middle" fill="#f9e2af" font-size="14" font-weight="700">20.0 °C</text>
+                </svg>
+
+                <!-- ═══ Tractor Heading ═══ -->
+                <svg id="anim-tractor" class="anim-scene hidden" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet">
+                    <!-- Scrolling ground -->
+                    <defs>
+                        <pattern id="dirt" patternUnits="userSpaceOnUse" width="20" height="20">
+                            <rect width="20" height="20" fill="#5a4a3a"/>
+                            <circle cx="5" cy="8" r="1" fill="#6b5b4b"/>
+                            <circle cx="15" cy="4" r="0.8" fill="#6b5b4b"/>
+                            <circle cx="10" cy="16" r="1.2" fill="#6b5b4b"/>
+                        </pattern>
+                    </defs>
+                    <rect x="0" y="0" width="300" height="200" fill="url(#dirt)"/>
+
+                    <!-- Target heading line -->
+                    <line id="tractor-target" x1="150" y1="100" x2="150" y2="10" stroke="#f9e2af" stroke-width="1.5" stroke-dasharray="5,4" opacity="0.6"/>
+                    <text id="tractor-target-label" x="155" y="18" fill="#f9e2af" font-size="8" opacity="0.6">Target</text>
+
+                    <!-- Tractor body (rotates) -->
+                    <g id="tractor-body" transform="translate(150,100)">
+                        <!-- Body -->
+                        <rect x="-18" y="-40" width="36" height="70" rx="6" fill="#a6e3a1" stroke="#6b8f6b" stroke-width="1.5"/>
+                        <!-- Cab -->
+                        <rect x="-14" y="-20" width="28" height="25" rx="3" fill="#89b4fa" opacity="0.5"/>
+                        <!-- Front wheels (steerable) -->
+                        <rect id="tractor-wheel-l" x="-22" y="-38" width="6" height="14" rx="2" fill="#313244" stroke="#a6adc8" stroke-width="0.8"/>
+                        <rect id="tractor-wheel-r" x="16" y="-38" width="6" height="14" rx="2" fill="#313244" stroke="#a6adc8" stroke-width="0.8"/>
+                        <!-- Rear wheels -->
+                        <rect x="-24" y="14" width="8" height="18" rx="3" fill="#313244" stroke="#a6adc8" stroke-width="0.8"/>
+                        <rect x="16" y="14" width="8" height="18" rx="3" fill="#313244" stroke="#a6adc8" stroke-width="0.8"/>
+                        <!-- Direction arrow -->
+                        <polygon points="0,-45 -5,-38 5,-38" fill="#f9e2af"/>
+                    </g>
+
+                    <!-- Compass rose -->
+                    <circle cx="40" cy="40" r="22" fill="none" stroke="#a6adc8" stroke-width="1" opacity="0.5"/>
+                    <text x="40" y="22" text-anchor="middle" fill="#a6adc8" font-size="7" opacity="0.6">N</text>
+                    <line id="compass-needle" x1="40" y1="40" x2="40" y2="22" stroke="#f38ba8" stroke-width="1.5"/>
+
+                    <!-- Heading readout -->
+                    <text id="tractor-heading-label" x="150" y="190" text-anchor="middle" fill="#f9e2af" font-size="14" font-weight="700">0.0°</text>
+                </svg>
+
+                <!-- ═══ Water Reservoir ═══ -->
+                <svg id="anim-reservoir" class="anim-scene hidden" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet">
+                    <!-- Tank body -->
+                    <rect x="60" y="30" width="160" height="150" rx="4" fill="none" stroke="#a6adc8" stroke-width="2"/>
+
+                    <!-- Water fill (animated height) -->
+                    <rect id="reservoir-water" x="62" y="130" width="156" height="48" rx="2" fill="#89b4fa" opacity="0.4"/>
+
+                    <!-- Target level dashed line -->
+                    <line id="reservoir-target" x1="55" y1="105" x2="225" y2="105" stroke="#f9e2af" stroke-width="1" stroke-dasharray="5,4" opacity="0.5"/>
+                    <text id="reservoir-target-lbl" x="228" y="108" fill="#f9e2af" font-size="7" opacity="0.6">Target</text>
+
+                    <!-- Inflow pipe (top) -->
+                    <rect x="20" y="25" width="45" height="10" rx="2" fill="#a6adc8" opacity="0.5"/>
+                    <!-- Inflow stream (animated opacity/width) -->
+                    <rect id="reservoir-inflow" x="38" y="35" width="8" height="95" rx="2" fill="#89b4fa" opacity="0"/>
+
+                    <!-- Drain pipe (bottom) -->
+                    <rect x="180" y="175" width="60" height="10" rx="2" fill="#a6adc8" opacity="0.5"/>
+                    <!-- Drain stream (animated) -->
+                    <rect id="reservoir-drain" x="195" y="178" width="6" height="15" rx="2" fill="#89b4fa" opacity="0"/>
+
+                    <!-- Pump icon -->
+                    <circle cx="30" cy="30" r="8" fill="none" stroke="#94e2d5" stroke-width="1.5"/>
+                    <text x="30" y="33" text-anchor="middle" fill="#94e2d5" font-size="8">P</text>
+
+                    <!-- Labels -->
+                    <text x="140" y="20" text-anchor="middle" fill="#cdd6f4" font-size="10" font-weight="600">Water Reservoir</text>
+                    <text id="reservoir-level-label" x="140" y="115" text-anchor="middle" fill="#f9e2af" font-size="14" font-weight="700">0.0%</text>
+                </svg>
+
+                <!-- ═══ Drone Altitude ═══ -->
+                <svg id="anim-drone" class="anim-scene hidden" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet">
+                    <!-- Sky gradient -->
+                    <defs>
+                        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#1e3a5f"/>
+                            <stop offset="100%" stop-color="#2a2a3c"/>
+                        </linearGradient>
+                    </defs>
+                    <rect x="0" y="0" width="300" height="200" fill="url(#sky)"/>
+
+                    <!-- Ground -->
+                    <rect x="0" y="185" width="300" height="15" fill="#5a4a3a" rx="2"/>
+                    <line x1="0" y1="185" x2="300" y2="185" stroke="#a6e3a1" stroke-width="1.5" opacity="0.4"/>
+
+                    <!-- Altitude scale -->
+                    <line x1="20" y1="185" x2="20" y2="15" stroke="#a6adc8" stroke-width="0.5" opacity="0.3"/>
+                    <text x="12" y="185" fill="#a6adc8" font-size="6" opacity="0.4">0</text>
+                    <text x="8" y="105" fill="#a6adc8" font-size="6" opacity="0.4">12m</text>
+                    <text x="8" y="20" fill="#a6adc8" font-size="6" opacity="0.4">25m</text>
+
+                    <!-- Target altitude line -->
+                    <line id="drone-target" x1="30" y1="115" x2="280" y2="115" stroke="#f9e2af" stroke-width="1" stroke-dasharray="5,4" opacity="0.5"/>
+                    <text id="drone-target-lbl" x="283" y="118" fill="#f9e2af" font-size="7" opacity="0.5">10m</text>
+
+                    <!-- Drone body (vertical position animated) -->
+                    <g id="drone-body" transform="translate(150, 115)">
+                        <!-- Arms -->
+                        <line x1="-30" y1="0" x2="30" y2="0" stroke="#a6adc8" stroke-width="2.5"/>
+                        <!-- Body -->
+                        <rect x="-10" y="-5" width="20" height="10" rx="3" fill="#a6adc8"/>
+                        <!-- Rotors -->
+                        <ellipse cx="-30" cy="-2" rx="12" ry="2" fill="#cdd6f4" opacity="0.4"/>
+                        <ellipse cx="30" cy="-2" rx="12" ry="2" fill="#cdd6f4" opacity="0.4"/>
+                        <!-- Thrust flame -->
+                        <polygon id="drone-flame" points="-6,10 0,25 6,10" fill="#f38ba8" opacity="0"/>
+                        <!-- Landing gear -->
+                        <line x1="-15" y1="8" x2="-20" y2="14" stroke="#a6adc8" stroke-width="1.5"/>
+                        <line x1="15" y1="8" x2="20" y2="14" stroke="#a6adc8" stroke-width="1.5"/>
+                    </g>
+
+                    <!-- Altitude readout -->
+                    <text id="drone-alt-label" x="150" y="195" text-anchor="middle" fill="#f9e2af" font-size="12" font-weight="700">0.0 m</text>
+                </svg>
+            </div>
+            <details id="system-info" open>
+                <summary>System Description</summary>
+                <p id="system-desc-text"></p>
+                <div id="system-equation"></div>
+                <table id="system-params">
+                    <thead><tr><th>Parameter</th><th>Value</th><th>Description</th></tr></thead>
+                    <tbody id="system-params-body"></tbody>
+                </table>
+            </details>
+            <details id="quick-start">
+                <summary>Quick Start Guide</summary>
+                <div class="guide-content">
+                    <ol>
+                        <li><strong>Choose a system</strong> from the dropdown at the top (e.g., Fermentation Vat).</li>
+                        <li><strong>Set PID gains</strong> using the K<sub>p</sub>, K<sub>i</sub>, K<sub>d</sub> sliders on the right. Start with K<sub>p</sub> only (leave K<sub>i</sub> and K<sub>d</sub> at 0).</li>
+                        <li>Press <strong>▶&nbsp;Start</strong> to run the simulation, then <strong>Step&nbsp;SP</strong> to change the target value and observe the response.</li>
+                        <li>Watch the <strong>time chart</strong> (bottom-left) to see how the process variable tracks the setpoint. The <strong>effort chart</strong> (top-right) shows each PID term's contribution.</li>
+                        <li>Adjust gains while the simulation runs to see immediate effects. Try adding K<sub>i</sub> to eliminate steady-state error, then K<sub>d</sub> to reduce overshoot.</li>
+                    </ol>
+                    <p class="guide-tips"><strong>Tips:</strong>
+                        Use the speed selector (top bar) for slow systems like the vat.
+                        The <em>Disturb</em> button injects a random perturbation to test disturbance rejection.
+                        Toggle <em>PID&nbsp;View</em> to see generic control-theory labels.
+                        Try <em>Manual</em> mode to control the actuator by hand — then appreciate why PID exists!
+                    </p>
+                    <p class="guide-tips"><strong>Assignment Mode:</strong>
+                        Click <em>Assignment Mode</em>, enter your Canvas variables A and B, select your problem, and tune the PID gains until all performance goals are met. Your completion code will appear automatically.
+                    </p>
+                </div>
+            </details>
+        </section>
+
+        <!-- ─── Top-Right: P/I/D Effort Breakdown ─── -->
+        <section id="panel-effort" class="panel">
+            <h3>Control Effort Breakdown</h3>
+            <div class="chart-wrap"><canvas id="effort-chart"></canvas></div>
+            <div id="pid-equation" class="pid-equation-box"></div>
+        </section>
+
+        <!-- ─── Bottom-Left: Time-Series Chart ─── -->
+        <section id="panel-timeseries" class="panel">
+            <div class="chart-toolbar">
+                <label for="chart-window" class="chart-window-label">Window:</label>
+                <select id="chart-window" title="Amount of sim-time visible on the chart">
+                    <option value="0">All</option>
+                    <option value="30">30 s</option>
+                    <option value="60">1 min</option>
+                    <option value="300">5 min</option>
+                    <option value="600">10 min</option>
+                    <option value="1800">30 min</option>
+                    <option value="3600">1 hr</option>
+                </select>
+            </div>
+            <div class="chart-wrap"><canvas id="time-chart"></canvas></div>
+        </section>
+
+        <!-- ─── Bottom-Right: Controls ─── -->
+        <section id="panel-controls" class="panel">
+
+            <!-- Mode Toggle -->
+            <div class="control-group mode-group">
+                <div class="mode-toggle">
+                    <button id="btn-auto" class="mode-btn active" data-mode="auto">Auto (PID)</button>
+                    <button id="btn-manual" class="mode-btn" data-mode="manual">Manual</button>
+                </div>
+            </div>
+
+            <!-- PID Gain Sliders -->
+            <div id="pid-sliders" class="control-group">
+                <div class="slider-row">
+                    <label for="slider-kp">K<sub>p</sub></label>
+                    <input type="range" id="slider-kp" min="0" max="20" step="0.1" value="0">
+                    <span id="val-kp" class="slider-val">0.0</span>
+                    <span id="range-kp" class="slider-range">[0 – 20]</span>
+                </div>
+                <div class="slider-row">
+                    <label for="slider-ki">K<sub>i</sub></label>
+                    <input type="range" id="slider-ki" min="0" max="0.05" step="0.001" value="0">
+                    <span id="val-ki" class="slider-val">0.000</span>
+                    <span id="range-ki" class="slider-range">[0 – 0.05]</span>
+                </div>
+                <div class="slider-row">
+                    <label for="slider-kd">K<sub>d</sub></label>
+                    <input type="range" id="slider-kd" min="0" max="500" step="1" value="0">
+                    <span id="val-kd" class="slider-val">0</span>
+                    <span id="range-kd" class="slider-range">[0 – 500]</span>
+                </div>
+            </div>
+
+            <!-- Manual Output Slider (hidden in auto mode) -->
+            <div id="manual-control" class="control-group hidden">
+                <div class="slider-row manual-slider-row">
+                    <label id="manual-label" for="slider-manual">Heater Dial</label>
+                    <input type="range" id="slider-manual" min="0" max="100" step="0.5" value="0">
+                    <span id="val-manual" class="slider-val">0.0</span>
+                    <span id="manual-unit" class="slider-range">%</span>
+                </div>
+            </div>
+
+            <!-- Setpoint Control -->
+            <div class="control-group sp-group">
+                <label id="sp-label" for="sp-input">Target Temperature</label>
+                <input type="number" id="sp-input" class="sp-input" value="37" step="0.5">
+                <span id="sp-unit">°C</span>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="control-group button-row">
+                <button id="btn-start" class="btn btn-primary" title="Start / pause simulation">▶ Start</button>
+                <button id="btn-step" class="btn" title="Step setpoint to test response">Step SP</button>
+                <button id="btn-disturb" class="btn" title="Inject a disturbance into the process">Disturb</button>
+                <button id="btn-reset" class="btn btn-danger" title="Reset to initial conditions">Reset</button>
+            </div>
+
+            <!-- Measurement Noise Slider -->
+            <div class="control-group noise-group">
+                <div class="slider-row">
+                    <label id="noise-label" for="slider-noise">Noise</label>
+                    <input type="range" id="slider-noise" min="0" max="100" step="1" value="0">
+                    <span id="val-noise" class="slider-val">0%</span>
+                    <span id="noise-unit" class="slider-range"></span>
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="control-group metrics-group">
+                <h4>Performance Metrics</h4>
+                <div class="metric-row"><span id="metric-overshoot-label">Peak Overshoot</span>: <strong id="metric-overshoot">—</strong></div>
+                <div class="metric-row"><span id="metric-settling-label">Settling Time</span>: <strong id="metric-settling">—</strong></div>
+                <div class="metric-row"><span id="metric-sse-label">Steady-State Error</span>: <strong id="metric-sse">—</strong></div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- ══════ Assignment Mode Setup Modal ══════ -->
+    <div id="assignment-overlay" class="modal-overlay hidden">
+        <div class="modal">
+            <h2>Assignment Mode</h2>
+            <p class="modal-desc">Enter your Canvas variables and select your problem.</p>
+
+            <div class="modal-field">
+                <label for="input-var-a">Variable A</label>
+                <input type="number" id="input-var-a" min="1" max="100" step="1" placeholder="1–100">
+            </div>
+            <div class="modal-field">
+                <label for="input-var-b">Variable B</label>
+                <input type="number" id="input-var-b" min="1" max="100" step="1" placeholder="1–100">
+            </div>
+            <div class="modal-field">
+                <label for="select-assignment">Problem</label>
+                <select id="select-assignment">
+                    <option value="vat">Problem 1: Fermentation Vat</option>
+                    <option value="tractor">Problem 2: Tractor Heading</option>
+                    <option value="reservoir">Problem 3: Water Reservoir</option>
+                    <option value="drone">Problem 4: Drone Altitude</option>
+                </select>
+            </div>
+
+            <!-- Goal preview (populated dynamically) -->
+            <div id="assignment-goals-preview" class="goal-preview"></div>
+
+            <div class="modal-actions">
+                <button id="btn-start-assignment" class="btn btn-primary" disabled>Start Assignment</button>
+                <button id="btn-cancel-assignment" class="btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════ Success Modal ══════ -->
+    <div id="success-overlay" class="modal-overlay hidden">
+        <div class="modal modal-success">
+            <h2>&#127942; Assignment Complete!</h2>
+            <p class="modal-desc">All performance goals met. Enter this code in your Canvas quiz:</p>
+            <div id="completion-code" class="completion-code">—</div>
+            <p class="code-hint">This code is unique to your variables A and B.</p>
+            <button id="btn-close-success" class="btn btn-primary">Continue Exploring</button>
+        </div>
+    </div>
+
+    <!-- ══════ Assignment Mode Banner (shown during active assignment) ══════ -->
+    <div id="assignment-banner" class="assignment-banner hidden">
+        <div class="banner-left">
+            <strong id="banner-problem">Problem 1: Fermentation Vat</strong>
+            <span class="banner-vars">A = <span id="banner-a">—</span>, B = <span id="banner-b">—</span></span>
+        </div>
+        <div id="banner-goals" class="banner-goals"></div>
+        <button id="btn-exit-assignment" class="btn btn-danger btn-sm" title="Exit assignment mode">Exit Assignment</button>
+    </div>
+
+    <!-- Animation Zoom Overlay (populated dynamically via JS) -->
+    <div id="anim-overlay" class="anim-overlay hidden">
+        <div id="anim-overlay-content" class="anim-overlay-content"></div>
+    </div>
+
+    <!-- Simulation engine (no DOM dependencies) -->
+    <script defer src="sim.js"></script>
+    <!-- UI layer (DOM manipulation, charts, animations) -->
+    <script defer src="ui.js"></script>
+</body>
+</html>
