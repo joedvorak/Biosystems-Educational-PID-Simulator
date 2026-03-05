@@ -865,7 +865,7 @@ const ASSIGNMENT_GOALS = {
     reservoir: {
         label: 'Problem 3: Water Reservoir',
         maxOvershoot: 15.0,      // % of step (absolute % level)
-        maxSSE: 2.0,             // %
+        maxSSE: 1.0,             // %
         maxSettlingTime: null,   // not constrained
         overshootUnit: '%',
         sseUnit: '%'
