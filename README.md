@@ -1,6 +1,6 @@
 # PID Tuning Simulator
 
-An interactive browser-based PID controller simulator for **BAE 305 — Engineering Analysis** at the University of Kentucky.
+An interactive browser-based PID controller simulator for **BAE 305 — DC Circuits and Microelectronics** at the University of Kentucky.
 
 ## Overview
 
