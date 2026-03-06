@@ -16,6 +16,9 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Skip to main content link (a11y) -->
+    <a href="#app" class="skip-link">Skip to main content</a>
+
     <!-- ══════ Header ══════ -->
     <header>
         <div class="header-left">
@@ -23,13 +26,15 @@
             <p class="subtitle">BAE 305 — DC Circuits &amp; Microelectronics</p>
         </div>
         <div class="header-right">
-            <select id="plant-select" title="Choose a scenario">
+            <label for="plant-select" class="sr-only">Choose a scenario</label>
+            <select id="plant-select" aria-label="Choose a scenario">
                 <option value="vat">Fermentation Vat</option>
                 <option value="tractor">Tractor Heading</option>
                 <option value="reservoir">Water Reservoir</option>
                 <option value="drone">Drone Altitude</option>
             </select>
-            <select id="speed-select" title="Time acceleration — runs N simulation steps per frame">
+            <label for="speed-select" class="sr-only">Time acceleration</label>
+            <select id="speed-select" aria-label="Time acceleration">
                 <option value="1">1×</option>
                 <option value="5">5×</option>
                 <option value="10">10×</option>
@@ -52,16 +57,17 @@
 
         <!-- ─── Top-Left: Animation Placeholder + System Description ─── -->
         <section id="panel-animation" class="panel">
-            <div id="animation-container">
+            <div id="animation-container" tabindex="0" role="button" aria-label="Click or press Enter to enlarge animation">
 
                 <!-- ═══ Fermentation Vat ═══ -->
-                <svg id="anim-vat" class="anim-scene" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet">
+                <svg id="anim-vat" class="anim-scene" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Fermentation vat animation showing current temperature and heater state">
+                    <title>Fermentation Vat Animation</title>
                     <!-- Ambient arrows (static) -->
-                    <line x1="20" y1="60" x2="20" y2="150" stroke="#89b4fa" stroke-width="1.5" opacity="0.35"/>
-                    <polygon points="20,155 16,148 24,148" fill="#89b4fa" opacity="0.35"/>
-                    <text x="8" y="55" fill="#89b4fa" font-size="7" opacity="0.4">T_amb</text>
-                    <line x1="260" y1="60" x2="260" y2="150" stroke="#89b4fa" stroke-width="1.5" opacity="0.35"/>
-                    <polygon points="260,155 256,148 264,148" fill="#89b4fa" opacity="0.35"/>
+                    <line x1="20" y1="60" x2="20" y2="150" stroke="#89b4fa" stroke-width="1.5" opacity="0.7"/>
+                    <polygon points="20,155 16,148 24,148" fill="#89b4fa" opacity="0.7"/>
+                    <text x="8" y="55" fill="#89b4fa" font-size="7" opacity="0.7">T_amb</text>
+                    <line x1="260" y1="60" x2="260" y2="150" stroke="#89b4fa" stroke-width="1.5" opacity="0.7"/>
+                    <polygon points="260,155 256,148 264,148" fill="#89b4fa" opacity="0.7"/>
 
                     <!-- Tank body -->
                     <rect x="50" y="40" width="180" height="140" rx="8" fill="none" stroke="#a6adc8" stroke-width="2"/>
@@ -93,7 +99,8 @@
                 </svg>
 
                 <!-- ═══ Tractor Heading ═══ -->
-                <svg id="anim-tractor" class="anim-scene hidden" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet">
+                <svg id="anim-tractor" class="anim-scene hidden" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Tractor heading animation showing current direction and target">
+                    <title>Tractor Heading Animation</title>
                     <!-- Scrolling ground -->
                     <defs>
                         <pattern id="dirt" patternUnits="userSpaceOnUse" width="20" height="20">
@@ -127,7 +134,7 @@
 
                     <!-- Compass rose -->
                     <circle cx="40" cy="40" r="22" fill="none" stroke="#a6adc8" stroke-width="1" opacity="0.5"/>
-                    <text x="40" y="22" text-anchor="middle" fill="#a6adc8" font-size="7" opacity="0.6">N</text>
+                    <text x="40" y="22" text-anchor="middle" fill="#a6adc8" font-size="7" opacity="0.8">N</text>
                     <line id="compass-needle" x1="40" y1="40" x2="40" y2="22" stroke="#f38ba8" stroke-width="1.5"/>
 
                     <!-- Heading readout -->
@@ -135,7 +142,8 @@
                 </svg>
 
                 <!-- ═══ Water Reservoir ═══ -->
-                <svg id="anim-reservoir" class="anim-scene hidden" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet">
+                <svg id="anim-reservoir" class="anim-scene hidden" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Water reservoir animation showing current level and inflow">
+                    <title>Water Reservoir Animation</title>
                     <!-- Tank body -->
                     <rect x="60" y="30" width="160" height="150" rx="4" fill="none" stroke="#a6adc8" stroke-width="2"/>
 
@@ -166,7 +174,8 @@
                 </svg>
 
                 <!-- ═══ Drone Altitude ═══ -->
-                <svg id="anim-drone" class="anim-scene hidden" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet">
+                <svg id="anim-drone" class="anim-scene hidden" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Drone altitude animation showing current height and target">
+                    <title>Drone Altitude Animation</title>
                     <!-- Sky gradient -->
                     <defs>
                         <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
@@ -182,9 +191,9 @@
 
                     <!-- Altitude scale -->
                     <line x1="20" y1="185" x2="20" y2="15" stroke="#a6adc8" stroke-width="0.5" opacity="0.3"/>
-                    <text x="12" y="185" fill="#a6adc8" font-size="6" opacity="0.4">0</text>
-                    <text x="8" y="105" fill="#a6adc8" font-size="6" opacity="0.4">12m</text>
-                    <text x="8" y="20" fill="#a6adc8" font-size="6" opacity="0.4">25m</text>
+                    <text x="12" y="185" fill="#a6adc8" font-size="6" opacity="0.7">0</text>
+                    <text x="8" y="105" fill="#a6adc8" font-size="6" opacity="0.7">12m</text>
+                    <text x="8" y="20" fill="#a6adc8" font-size="6" opacity="0.7">25m</text>
 
                     <!-- Target altitude line -->
                     <line id="drone-target" x1="30" y1="115" x2="280" y2="115" stroke="#f9e2af" stroke-width="1" stroke-dasharray="5,4" opacity="0.5"/>
@@ -245,7 +254,8 @@
         <!-- ─── Top-Right: P/I/D Effort Breakdown ─── -->
         <section id="panel-effort" class="panel">
             <h3>Control Effort Breakdown</h3>
-            <div class="chart-wrap"><canvas id="effort-chart"></canvas></div>
+            <div class="chart-wrap"><canvas id="effort-chart" role="img" aria-label="Bar chart showing PID control effort breakdown: Bias, Proportional, Integral, and Derivative terms"></canvas></div>
+            <div id="effort-sr-summary" class="sr-only" aria-live="polite" aria-atomic="true"></div>
             <div id="pid-equation" class="pid-equation-box"></div>
         </section>
 
@@ -263,17 +273,17 @@
                     <option value="3600">1 hr</option>
                 </select>
             </div>
-            <div class="chart-wrap"><canvas id="time-chart"></canvas></div>
+            <div class="chart-wrap"><canvas id="time-chart" role="img" aria-label="Time-series chart showing setpoint, process variable, and control signal over time. Key metrics are listed in the Performance Metrics section."></canvas></div>
         </section>
 
         <!-- ─── Bottom-Right: Controls ─── -->
         <section id="panel-controls" class="panel">
 
             <!-- Mode Toggle -->
-            <div class="control-group mode-group">
+            <div class="control-group mode-group" role="radiogroup" aria-label="Control mode">
                 <div class="mode-toggle">
-                    <button id="btn-auto" class="mode-btn active" data-mode="auto">Auto (PID)</button>
-                    <button id="btn-manual" class="mode-btn" data-mode="manual">Manual</button>
+                    <button id="btn-auto" class="mode-btn active" data-mode="auto" role="radio" aria-checked="true">Auto (PID)</button>
+                    <button id="btn-manual" class="mode-btn" data-mode="manual" role="radio" aria-checked="false">Manual</button>
                 </div>
             </div>
 
@@ -335,20 +345,22 @@
             </div>
 
             <!-- Performance Metrics -->
-            <div class="control-group metrics-group">
+            <div class="control-group metrics-group" aria-live="polite" aria-atomic="true">
                 <h4>Performance Metrics</h4>
-                <div class="metric-row"><span id="metric-overshoot-label">Peak Overshoot</span>: <strong id="metric-overshoot">—</strong></div>
-                <div class="metric-row"><span id="metric-settling-label">Settling Time</span>: <strong id="metric-settling">—</strong></div>
-                <div class="metric-row"><span id="metric-sse-label">Steady-State Error</span>: <strong id="metric-sse">—</strong></div>
+                <dl class="metrics-list">
+                    <div class="metric-row"><dt id="metric-overshoot-label">Peak Overshoot</dt><dd id="metric-overshoot">—</dd></div>
+                    <div class="metric-row"><dt id="metric-settling-label">Settling Time</dt><dd id="metric-settling">—</dd></div>
+                    <div class="metric-row"><dt id="metric-sse-label">Steady-State Error</dt><dd id="metric-sse">—</dd></div>
+                </dl>
             </div>
 
         </section>
     </main>
 
     <!-- ══════ Assignment Mode Setup Modal ══════ -->
-    <div id="assignment-overlay" class="modal-overlay hidden">
+    <div id="assignment-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="assignment-modal-title">
         <div class="modal">
-            <h2>Assignment Mode</h2>
+            <h2 id="assignment-modal-title">Assignment Mode</h2>
             <p class="modal-desc">Enter your Canvas variables and select your problem.</p>
 
             <div class="modal-field">
@@ -380,9 +392,9 @@
     </div>
 
     <!-- ══════ Success Modal ══════ -->
-    <div id="success-overlay" class="modal-overlay hidden">
+    <div id="success-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="success-modal-title">
         <div class="modal modal-success">
-            <h2>&#127942; Assignment Complete!</h2>
+            <h2 id="success-modal-title">&#127942; Assignment Complete!</h2>
             <p class="modal-desc">All performance goals met. Enter this code in your Canvas quiz:</p>
             <div id="completion-code" class="completion-code">—</div>
             <p class="code-hint">This code is unique to your variables A and B.</p>
@@ -391,7 +403,7 @@
     </div>
 
     <!-- ══════ Assignment Mode Banner (shown during active assignment) ══════ -->
-    <div id="assignment-banner" class="assignment-banner hidden">
+    <div id="assignment-banner" class="assignment-banner hidden" role="status" aria-live="polite">
         <div class="banner-left">
             <strong id="banner-problem">Problem 1: Fermentation Vat</strong>
             <span class="banner-vars">A = <span id="banner-a">—</span>, B = <span id="banner-b">—</span></span>
@@ -401,7 +413,7 @@
     </div>
 
     <!-- Animation Zoom Overlay (populated dynamically via JS) -->
-    <div id="anim-overlay" class="anim-overlay hidden">
+    <div id="anim-overlay" class="anim-overlay hidden" role="dialog" aria-modal="true" aria-label="Enlarged animation view">
         <div id="anim-overlay-content" class="anim-overlay-content"></div>
     </div>
 

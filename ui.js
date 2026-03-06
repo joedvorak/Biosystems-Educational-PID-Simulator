@@ -64,6 +64,7 @@ const $animContainer     = document.getElementById('animation-container');
 const $animOverlay       = document.getElementById('anim-overlay');
 const $animOverlayContent = document.getElementById('anim-overlay-content');
 const $pidEquation       = document.getElementById('pid-equation');
+const $effortSrSummary   = document.getElementById('effort-sr-summary');
 
 // ─── Assignment Mode DOM References ──────────────────────────
 
@@ -461,6 +462,10 @@ function updateVatAnimation(pv, effort) {
 
     // Temperature label
     $vatTempLbl.textContent = `${pv.toFixed(1)} °C`;
+
+    // Update SVG aria-label for screen readers
+    $animScenes.vat.setAttribute('aria-label',
+        `Fermentation vat: temperature ${pv.toFixed(1)}°C, heater effort ${effort.toFixed(0)}%`);
 }
 
 
@@ -487,6 +492,10 @@ function updateTractorAnimation(heading, steeringAngle, targetHeading) {
 
     // Heading readout
     $tractorHeadingLbl.textContent = `${heading.toFixed(1)}°`;
+
+    // Update SVG aria-label for screen readers
+    $animScenes.tractor.setAttribute('aria-label',
+        `Tractor heading: ${heading.toFixed(1)}°, target ${targetHeading.toFixed(1)}°`);
 }
 
 
@@ -527,6 +536,10 @@ function updateReservoirAnimation(level, effort, targetLevel) {
     const lblY = lFrac > 0.15 ? (waterY + waterH / 2 + 5) : (waterY - 5);
     $reservoirLevelLbl.setAttribute('y', lblY);
     $reservoirLevelLbl.textContent = `${level.toFixed(1)}%`;
+
+    // Update SVG aria-label for screen readers
+    $animScenes.reservoir.setAttribute('aria-label',
+        `Water reservoir: level ${level.toFixed(1)}%, target ${targetLevel.toFixed(1)}%`);
 }
 
 
@@ -564,6 +577,10 @@ function updateDroneAnimation(altitude, effort, targetAlt) {
 
     // Altitude readout
     $droneAltLbl.textContent = `${altitude.toFixed(1)} m`;
+
+    // Update SVG aria-label for screen readers
+    $animScenes.drone.setAttribute('aria-label',
+        `Drone altitude: ${altitude.toFixed(1)}m, target ${targetAlt}m`);
 }
 
 
@@ -621,6 +638,10 @@ window.updateUI = function updateUI() {
     effortChart.options.scales.y.suggestedMin = -effortYRange;
     effortChart.options.scales.y.suggestedMax =  effortYRange;
     effortChart.update('none');
+
+    // --- Effort chart screen-reader summary ---
+    $effortSrSummary.textContent =
+        `Bias: ${s.bias.toFixed(1)}, P: ${s.pTerm.toFixed(1)}, I: ${s.iTerm.toFixed(1)}, D: ${s.dTerm.toFixed(1)}`;
 
     // --- Setpoint display ---
     syncSPInput();
@@ -722,11 +743,15 @@ function setMode(mode) {
     if (mode === 'auto') {
         $btnAuto.classList.add('active');
         $btnManual.classList.remove('active');
+        $btnAuto.setAttribute('aria-checked', 'true');
+        $btnManual.setAttribute('aria-checked', 'false');
         $pidSliders.classList.remove('hidden');
         $manualCtrl.classList.add('hidden');
     } else {
         $btnManual.classList.add('active');
         $btnAuto.classList.remove('active');
+        $btnManual.setAttribute('aria-checked', 'true');
+        $btnAuto.setAttribute('aria-checked', 'false');
         $pidSliders.classList.add('hidden');
         $manualCtrl.classList.remove('hidden');
 
@@ -897,11 +922,14 @@ function openAssignmentModal() {
     $inputVarB.value = '';
     $btnStartAssignment.disabled = true;
     renderGoalPreview($selectAssignment.value);
+    // Focus the first input for keyboard users
+    setTimeout(() => $inputVarA.focus(), 50);
 }
 
 /** Close the assignment setup modal without starting. */
 function closeAssignmentModal() {
     $assignmentOverlay.classList.add('hidden');
+    $btnAssignmentMode.focus();
 }
 
 /** Activate assignment mode with the selected problem. */
@@ -971,16 +999,22 @@ function updateGoalBadges() {
         const met = SimState.peakOvershoot <= goals.maxOvershoot;
         badgeOvershoot.classList.toggle('met', met);
         badgeOvershoot.classList.toggle('unmet', !met);
+        badgeOvershoot.setAttribute('aria-label',
+            `Overshoot ≤ ${goals.maxOvershoot} ${goals.overshootUnit}: ${met ? 'met' : 'not met'}`);
     }
     if (badgeSSE) {
         const met = SimState.steadyStateError !== undefined && SimState.steadyStateError <= goals.maxSSE;
         badgeSSE.classList.toggle('met', met);
         badgeSSE.classList.toggle('unmet', !met);
+        badgeSSE.setAttribute('aria-label',
+            `SSE ≤ ${goals.maxSSE} ${goals.sseUnit}: ${met ? 'met' : 'not met'}`);
     }
     if (badgeSettling) {
         const met = SimState.settlingTime !== null && SimState.settlingTime <= goals.maxSettlingTime;
         badgeSettling.classList.toggle('met', met);
         badgeSettling.classList.toggle('unmet', !met);
+        badgeSettling.setAttribute('aria-label',
+            `Settling ≤ ${goals.maxSettlingTime} s: ${met ? 'met' : 'not met'}`);
     }
 }
 
@@ -988,6 +1022,7 @@ function updateGoalBadges() {
 function showSuccessModal(code) {
     $completionCode.textContent = code.toLocaleString();
     $successOverlay.classList.remove('hidden');
+    setTimeout(() => $btnCloseSuccess.focus(), 50);
 }
 
 /** Exit assignment mode and return to exploration. */
@@ -1021,6 +1056,7 @@ $btnStartAssignment.addEventListener('click', startAssignment);
 $btnExitAssignment.addEventListener('click', exitAssignmentMode);
 $btnCloseSuccess.addEventListener('click', () => {
     $successOverlay.classList.add('hidden');
+    $btnStart.focus();
 });
 
 $inputVarA.addEventListener('input', validateAssignmentInputs);
@@ -1033,6 +1069,51 @@ $selectAssignment.addEventListener('change', () => {
 $assignmentOverlay.addEventListener('click', (e) => {
     if (e.target === $assignmentOverlay) closeAssignmentModal();
 });
+
+
+// ─── Keyboard: Escape to close modals & overlay ─────────────
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (overlayActive) {
+            closeAnimOverlay();
+            $animContainer.focus();
+        } else if (!$assignmentOverlay.classList.contains('hidden')) {
+            closeAssignmentModal();
+        } else if (!$successOverlay.classList.contains('hidden')) {
+            $successOverlay.classList.add('hidden');
+            $btnStart.focus();
+        }
+    }
+});
+
+
+// ─── Focus Trap for Modals ───────────────────────────────────
+
+function trapFocus(modalOverlay) {
+    modalOverlay.addEventListener('keydown', (e) => {
+        if (e.key !== 'Tab') return;
+        const focusable = modalOverlay.querySelectorAll(
+            'button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+            if (document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            }
+        } else {
+            if (document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        }
+    });
+}
+trapFocus($assignmentOverlay);
+trapFocus($successOverlay);
 
 
 // ─── Animation Zoom Overlay ──────────────────────────────────
@@ -1049,6 +1130,7 @@ function openAnimOverlay() {
     $animOverlayContent.appendChild(activeSVG);
     $animOverlay.classList.remove('hidden');
     overlayActive = true;
+    $animOverlayContent.focus();
 }
 
 function closeAnimOverlay() {
@@ -1061,6 +1143,12 @@ function closeAnimOverlay() {
 }
 
 $animContainer.addEventListener('click', openAnimOverlay);
+$animContainer.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openAnimOverlay();
+    }
+});
 $animOverlay.addEventListener('click', (e) => {
     // Close when clicking the backdrop (not the content box)
     if (e.target === $animOverlay) closeAnimOverlay();
